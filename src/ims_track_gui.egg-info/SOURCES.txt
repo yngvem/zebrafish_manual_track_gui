@@ -1,0 +1,12 @@
+setup.cfg
+setup.py
+src/ims_track_gui/__init__.py
+src/ims_track_gui/controller.py
+src/ims_track_gui/model.py
+src/ims_track_gui/utils.py
+src/ims_track_gui/view.py
+src/ims_track_gui.egg-info/PKG-INFO
+src/ims_track_gui.egg-info/SOURCES.txt
+src/ims_track_gui.egg-info/dependency_links.txt
+src/ims_track_gui.egg-info/requires.txt
+src/ims_track_gui.egg-info/top_level.txt
