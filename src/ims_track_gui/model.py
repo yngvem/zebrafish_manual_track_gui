@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 from PyQt5.QtCore import QObject, pyqtSignal
 
-from confocal_microscopy.files import ims
+from .files import ims
 
 #from .utils import PythonObjectEncoder, as_python_object
 
@@ -25,6 +25,7 @@ class TrackData(QObject):
         self.track_path: Path = None
 
         self.track_video: np.ndarray = None
+        self.background_img: np.ndarray = None
         self._num_frames = 0
         self._vmin: int = 0
         self._vmax: int = 100
@@ -37,9 +38,17 @@ class TrackData(QObject):
 
     def load_video(self, ims_path):
         ims_path = Path(ims_path)
+        if len(sorted(ims_path.parent.glob("*Snap*"))) > 0:
+            bg_path = sorted(ims_path.parent.glob("*Snap*"))[0]
+            self.background_img = ims.load_background(bg_path)
+        elif len(sorted(ims_path.parent.parent.glob("*Snap*"))) > 0:
+            bg_path = sorted(ims_path.parent.parent.glob("*Snap*"))[0]
+            self.background_img = ims.load_background(bg_path)
+        else:
+            self.background_img = None
 
         # Load video and cast to 8-bit
-        self.track_video = ims.load_video_stack(ims_path, progress=True).squeeze()
+        self.track_video = ims.load_video_stack(ims_path, progress=True, num_timesteps=None).squeeze()
         self.track_video -= self.track_video.min()
         self.track_video = (self.track_video * (255 / self.track_video.max())).astype(np.uint8)
         print("Loaded video", flush=True)

@@ -1,5 +1,6 @@
 import matplotlib.backends.backend_qt5agg as mpl_backend
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QKeySequence
@@ -43,6 +44,7 @@ class TrackingWidget(QtWidgets.QWidget):
         super().__init__(parent=parent)
         self.figure = plt.Figure()
         self.axes = self.figure.add_axes((0, 0, 1, 1))
+        self.background = self.axes.imshow([[0]], cmap="viridis")
         self.image = self.axes.imshow([[0]], vmin=0, vmax=100, cmap="gray")
         self.points = self.axes.scatter([], [], facecolors='none', edgecolors="navy", linewidth=2)
         self.current_point = self.axes.scatter([], [], facecolors='none', edgecolors="tomato", linewidth=2)
@@ -90,19 +92,39 @@ class TrackingWidget(QtWidgets.QWidget):
             if track == current_track_id:
                 self.track_list.setCurrentItem(item)
 
-    def set_frame(self, frame_data, points, current_point):
+    def set_frame(self, frame_data, points, current_point, vmin, vmax, background):
         # Draw image
         old_data = self.image.get_array()
         if old_data.shape != frame_data.shape:
             clim = self.image.get_clim()
             self.image.remove()
-            self.image = self.axes.imshow(frame_data, vmin=clim[0], vmax=clim[1], cmap="gray")
+            self.background.remove()
+            if background is not None:
+                frame_data = (frame_data - vmin).astype(float) / (vmax - vmin)
+                frame_data[frame_data < 0] = 0
+                frame_data[frame_data > 1] = 1
+                img = cm.gray(frame_data)
+                img[..., -1] = frame_data
+                self.background = self.axes.imshow(background, zorder=-5)
+                self.image = self.axes.imshow(img)
+            else:
+                self.image = self.axes.imshow(frame_data, vmin=vmin, vmax=vmax, cmap="gray")
 
             self.axes.set_xlim(0, frame_data.shape[1])
             self.axes.set_ylim(0, frame_data.shape[0])
-            self.axes.set_title(f"vmin: {clim[0]}, vmax: {clim[1]}")
+            self.axes.set_title(f"vmin: {vmin}, vmax: {vmax}")
         else:
-            self.image.set_array(frame_data)
+            if background is not None:
+                self.background.remove()
+                frame_data = (frame_data - vmin).astype(float) / (vmax - vmin)
+                frame_data[frame_data < 0] = 0
+                frame_data[frame_data > 1] = 1
+                img = cm.gray(frame_data)
+                self.background = self.axes.imshow(background, zorder=-5)
+                self.image.set_array(img)
+            else:
+                self.image.set_array(frame_data)
+
         
         self.set_points(points, current_point)
         self.frame_label.setText(f"Frame: {self.frame_slider.value()}")

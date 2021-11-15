@@ -55,7 +55,10 @@ class TrackController:
         self.view.widget.set_frame(
             self.model.track_video[self.model.current_frame].squeeze(),
             self.model.current_points,
-            self.model.current_track
+            self.model.current_track,
+            self.model.vmin,
+            self.model.vmax,
+            self.model.background_img,
         )
     
     def set_frame(self, *args):
@@ -72,9 +75,11 @@ class TrackController:
     
     def adjust_vmax(self, value):
         self.view.widget.set_vmax(value)
+        self.update_frame(value)
 
     def adjust_vmin(self, value):
         self.view.widget.set_vmin(value)
+        self.update_frame(value)
     
     def update_slider(self, value):
         self.view.widget.frame_slider.setMaximum(self.model.num_frames - 1)
